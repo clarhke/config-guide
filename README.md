@@ -823,6 +823,22 @@ If `nvim` reports a missing `tree-sitter` or compiler error, make sure both `tre
 
 These keys don't clash with LazyVim's own git keys.
 
+### Using git in Neovim
+
+Lazygit only works inside a git repository, so open Neovim from the repository's folder, or open a file from it. If you open Neovim somewhere else, such as your home folder, `Space g g` asks "Not in a git repository. Create a new git repository?". Press `n`, then `q`, and never `y`, because that would turn your home folder into a repository:
+
+```bash
+cd ~/code/nvim
+n
+```
+
+To commit and push, press `Space g g`, then:
+
+- `a` stages all changes.
+- `c` commits (type a message, then Enter).
+- `P` (capital) pushes, and `p` (lowercase) pulls.
+- `q` closes lazygit.
+
 ---
 
 ## 10. Moving to a new laptop
