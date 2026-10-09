@@ -15,7 +15,7 @@ Contents:
 - 6. Hyprland config
 - 7. VPN (Proton VPN)
 - 8. Laptop battery life (TLP)
-- 9. LazyVim, Neogit, Diffview and GitGraph
+- 9. LazyVim, Diffview and GitGraph
 - 10. Moving to a new laptop
 - 11. Cleanup
 
@@ -731,7 +731,7 @@ TLP is installed explicitly, so the cleanup in step 11 won't remove it.
 
 ---
 
-## 9. LazyVim, Neogit, Diffview and GitGraph
+## 9. LazyVim, Diffview and GitGraph
 
 Run this after everything above. LazyVim needs Neovim 0.11 or newer, which Arch's `neovim` package already is (installed in step 2). These packages are installed explicitly, so the cleanup in step 11 won't remove them.
 
@@ -758,7 +758,7 @@ git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
 ```
 
-### Add neogit, diffview and gitgraph
+### Add diffview and gitgraph
 
 LazyVim loads every file in `lua/plugins/` automatically:
 
@@ -771,17 +771,6 @@ return {
     keys = {
       { "<leader>gv", "<cmd>DiffviewOpen<cr>", desc = "Diffview" },
       { "<leader>gV", "<cmd>DiffviewClose<cr>", desc = "Diffview close" },
-    },
-  },
-  {
-    "NeogitOrg/neogit",
-    dependencies = { "nvim-lua/plenary.nvim", "sindrets/diffview.nvim" },
-    cmd = "Neogit",
-    keys = {
-      { "<leader>gn", "<cmd>Neogit<cr>", desc = "Neogit" },
-    },
-    opts = {
-      integrations = { diffview = true },
     },
   },
   {
@@ -828,7 +817,7 @@ If `nvim` reports a missing `tree-sitter` or compiler error, make sure both `tre
 
 `<leader>` is Space:
 
-- `Space g n` opens Neogit.
+- `Space g g` opens lazygit, for staging, committing and pushing (`a` stages all, `c` commits, `P` pushes, `q` closes).
 - `Space g v` opens Diffview, and `Space g V` closes it.
 - `Space g m` opens the git graph. Press Enter on a commit to open its diff in Diffview.
 
