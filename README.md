@@ -838,10 +838,11 @@ These keys don't clash with LazyVim's own git keys.
 
 ## 10. Moving to a new laptop
 
-Your Hyprland config and your Neovim config each live in their own GitHub repository, so on a new laptop you clone them instead of rewriting anything. This guide lives in its own repository too: `https://github.com/clarhke/config-guide`.
+Your Hyprland config and your Neovim config each live in their own GitHub repository, so on a new laptop you clone them instead of rewriting anything. This guide lives in its own repository too: `https://github.com/clarhke/config-guide`. The real folders live in `~/code`, and `~/.config` only holds links to them, so avoid deleting those links by hand.
 
-- Hyprland config: `https://github.com/clarhke/hyprland`, restored to `~/.config/hypr`
-- Neovim config: `https://github.com/clarhke/nvim`, restored to `~/.config/nvim`
+- Hyprland config: `https://github.com/clarhke/hyprland`, kept in `~/code/hyprland` and linked from `~/.config/hypr`
+- Neovim config: `https://github.com/clarhke/nvim`, kept in `~/code/nvim` and linked from `~/.config/nvim`
+- This guide: `https://github.com/clarhke/config-guide`, cloned to `~/code/config-guide`
 
 ### Before you start
 
@@ -870,14 +871,17 @@ A fresh Hyprland install creates its own `~/.config/hypr`, and `git clone` refus
 
 ```bash
 mv ~/.config/hypr ~/.config/hypr.bak
-git clone https://github.com/clarhke/hyprland.git ~/.config/hypr
+mkdir -p ~/code
+git clone https://github.com/clarhke/hyprland.git ~/code/hyprland
+ln -s ~/code/hyprland ~/.config/hypr
 ```
 
 ### Restore the Neovim config
 
 ```bash
 mv ~/.config/nvim ~/.config/nvim.bak
-git clone https://github.com/clarhke/nvim.git ~/.config/nvim
+git clone https://github.com/clarhke/nvim.git ~/code/nvim
+ln -s ~/code/nvim ~/.config/nvim
 ```
 
 Then open Neovim with `nvim`. The first launch installs all the plugins and treesitter parsers, which takes a minute. When the messages stop, quit with `:qa` and reopen once. `lazy-lock.json` is in the repository, so you get the same plugin versions as before.
