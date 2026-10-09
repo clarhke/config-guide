@@ -380,30 +380,44 @@ Notes:
 - The path uses `$HOME`, so it works for any username.
 - `splash = false` hides the small random text ("better call vaxry") at the bottom of the screen. It's set here because hyprpaper draws over Hyprland's own splash.
 
-### Login screen wallpaper (SDDM)
+### Login screen (SDDM)
 
-SDDM runs as its own user and can't read your home folder, so copy the wallpaper somewhere it can:
+The login screen is a plain black screen with your username already filled in and a password box. It uses a small theme called minimal, whose files are kept in the hyprland repository (step 6) in the sddm/minimal folder. SDDM can't read your home folder, so copy the theme to the system themes folder:
 
-```bash
-sudo mkdir -p /usr/share/backgrounds
-sudo cp ~/misc/wallpaper.png /usr/share/backgrounds/
+```
+sudo cp -r ~/.config/hypr/sddm/minimal /usr/share/sddm/themes/
 ```
 
-Set the `maldives` theme and point it at the wallpaper:
+The theme fills in arch when SDDM has no last user yet. If your username is different, change it to yours:
 
-```bash
+```
+sudo sed -i "s/: \"arch\"/: \"$USER\"/" /usr/share/sddm/themes/minimal/Main.qml
+```
+
+Set it as the theme:
+
+```
 sudo mkdir -p /etc/sddm.conf.d
-printf '[Theme]\nCurrent=maldives\n' | sudo tee /etc/sddm.conf.d/theme.conf
-printf '[General]\nbackground=/usr/share/backgrounds/wallpaper.png\n' | sudo tee /usr/share/sddm/themes/maldives/theme.conf.user
+printf '[Theme]\nCurrent=minimal\n' | sudo tee /etc/sddm.conf.d/theme.conf
 ```
 
-Log out or reboot to see the result.
+Preview it before rebooting (the Enter key does nothing in the preview, that's normal):
+
+```
+sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/minimal
+```
+
+Reboot to see the result.
 
 Notes:
-- Setting the theme explicitly matters. If no theme is set, SDDM picks one itself, and it may pick one with no background option (`maya` shows a plain blue screen).
-- The wallpaper goes in `theme.conf.user`, so a theme update won't overwrite it.
 
----
+- Setting the theme explicitly matters. If no theme is set, SDDM picks one itself.
+- SDDM only remembers the last user after a successful login, so after your first login it shows whoever logged in last.
+- If the login screen ever stops accepting your password, press Ctrl+Alt+F3, log in on the text screen, remove the setting and reboot:
+
+```
+sudo rm /etc/sddm.conf.d/theme.conf
+```
 
 ## 5. Shell aliases
 
@@ -430,74 +444,52 @@ Now `c` launches cliamp and `n` launches Neovim.
 
 ## 6. Hyprland config
 
-```bash
-nano ~/.config/hypr/hyprland.lua
+Your whole Hyprland config is one file, hyprland.lua, kept in its own GitHub repository (https://github.com/clarhke/hyprland) in ~/code/hyprland, with ~/.config/hypr linking to it. The file already sets the programs (terminal = kitty, fileManager = dolphin, menu = hyprlauncher, browser = brave), starts waybar, hyprpaper and Proton VPN on login, and holds all the keybinds. brave-bin is the package name, brave is the command.
+
+A fresh Hyprland install creates its own ~/.config/hypr, and git clone refuses a folder that isn't empty, so move it aside first (a "No such file" error just means there wasn't one):
+
 ```
-
-Things to make sure are set in it:
-- **Programs:** `terminal = "kitty"`, `fileManager = "dolphin"`, `menu = "hyprlauncher"`.
-- **Browser:** `local browser = "brave"`. Use straight quotes, because Lua rejects curly ones. `brave-bin` is the package name, `brave` is the command.
-- **Autostart:** launch `waybar`, `hyprpaper` and `protonvpn-app` on `hyprland.start`.
-- **Keybinds used with this setup:**
-
-```lua
-hl.bind("SHIFT + Shift_R", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(browser))
-hl.bind("PRINT", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
-hl.bind(mainMod .. " + PRINT", hl.dsp.exec_cmd("hyprshot -m region -o $HOME/misc"))
-```
-
-`PRINT` copies a selected area to the clipboard. `SUPER + PRINT` saves it to `~/misc` as well.
-
-Reload keybind changes without logging out:
-
-```bash
+mv ~/.config/hypr ~/.config/hypr.bak
+mkdir -p ~/code
+git clone https://github.com/clarhke/hyprland.git ~/code/hyprland
+ln -s ~/code/hyprland ~/.config/hypr
 hyprctl reload
 ```
 
-To test autostart, log out and back in (or reboot). `hyprctl reload` does not re-run `hyprland.start`, so waybar, hyprpaper and Proton VPN won't relaunch from it.
+Keybinds used with this setup:
+
+- SHIFT + right Shift opens the terminal
+- SUPER + A opens the file manager
+- SUPER + S opens the browser
+- SUPER + P hides and shows the Proton VPN window (step 7)
+- PRINT copies a selected area of the screen to the clipboard
+- SUPER + PRINT saves it to ~/misc as well
+
+Some values in the file belong to the laptop: the monitor name in the wallpaper line (eDP-1), kb_layout and scale. Check them against the laptop checklist at the top, and edit with:
+
+```
+nano ~/.config/hypr/hyprland.lua
+```
+
+hyprctl reload applies keybind changes without logging out. To test autostart, log out and back in (or reboot). hyprctl reload does not re-run hyprland.start, so waybar, hyprpaper and Proton VPN won't relaunch from it.
 
 ### Backing up your config to GitHub (optional)
 
-GitHub doesn't accept your account password in the terminal, so log in with `github-cli` (step 2). Choose GitHub.com, HTTPS, and "Login with a web browser", then paste the one-time code into the browser. The second command lets git use that login:
+GitHub doesn't accept your account password in the terminal, so log in with github-cli (step 2). Choose GitHub.com, HTTPS, and "Login with a web browser", then paste the one-time code into the browser. The second command lets git use that login:
 
-```bash
+```
 gh auth login
 gh auth setup-git
 ```
 
-Tell git your name and email once, so commits are labelled properly. To keep your real email private, use the `...@users.noreply.github.com` address from GitHub's email settings:
+Tell git your name and email once, so commits are labelled properly. To keep your real email private, use the ...@users.noreply.github.com address from GitHub's email settings:
 
-```bash
+```
 git config --global user.name "your name"
 git config --global user.email "you@example.com"
 ```
 
-Create an empty repository on github.com first (leave "Add README" off), then push your config. Replace `YOUR_USERNAME` and `REPO_NAME`:
-
-```bash
-cd ~/.config/hypr
-git init
-git add .
-git commit -m "initial commit"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/REPO_NAME.git
-git push -u origin main
-```
-
-Later, after changing your config:
-
-```bash
-cd ~/.config/hypr
-git add .
-git commit -m "what you changed"
-git push
-```
-
-A public repository shows everything in it to everyone, so check the files for anything private (tokens, API keys, personal paths) before pushing, or make the repository private.
-
----
+Cloning a public repository needs no login, but pushing does. After changing your config, commit and push it as shown in step 10. A public repository shows everything in it to everyone, so check the files for anything private (tokens, API keys, personal paths) before pushing, or make the repository private.
 
 ## 7. VPN (Proton VPN)
 
@@ -572,59 +564,18 @@ Closing the app's window with the **X** quits it and drops the VPN (it asks you 
 
 ### Hide and show the window (SUPER + P)
 
-This adds one key that tucks the Proton VPN window away on a hidden workspace and brings it back. The VPN stays connected while it's hidden, and if the app isn't running the key launches it. It needs `jq`:
+This uses one key to tuck the Proton VPN window away on a hidden workspace and bring it back. The VPN stays connected while it's hidden, and if the app isn't running the key launches it. The key is already in hyprland.lua (step 6) and only needs jq:
 
-```bash
+```
 sudo pacman -S --needed jq
-```
-
-Create the script:
-
-```bash
-cat > ~/.config/hypr/protonvpn-toggle.sh <<'EOF'
-#!/bin/bash
-info=$(hyprctl clients -j | jq -r '.[] | select(.title=="Proton VPN") | "\(.address) \(.workspace.name)"' | head -n1)
-if [ -z "$info" ]; then
-  protonvpn-app &
-  exit
-fi
-addr=${info% *}
-ws=${info#* }
-if [ "$ws" != "special:vpn" ]; then
-  hyprctl dispatch "hl.dsp.window.move({ workspace = \"special:vpn\", follow = false, window = \"address:$addr\" })"
-else
-  hyprctl dispatch 'hl.dsp.workspace.toggle_special("vpn")'
-fi
-EOF
-chmod +x ~/.config/hypr/protonvpn-toggle.sh
-```
-
-If you're using the `hyprland.lua` from the hyprland repository, it already has the key and the autostart line, so skip the next two steps and just run `hyprctl reload`.
-
-Check whether `SUPER + P` is already used (the default config binds it to pseudo-tiling):
-
-```bash
-grep -n '" + P"' ~/.config/hypr/hyprland.lua
-```
-
-If a line shows up, put `-- ` at the start of it so the two binds don't fight. Then add the key and reload:
-
-```bash
-echo 'hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("$HOME/.config/hypr/protonvpn-toggle.sh"))' >> ~/.config/hypr/hyprland.lua
 hyprctl reload
 ```
 
-Press `SUPER + P` to hide the window and `SUPER + P` again to show it. To use a different key, change the `P` in the last command.
+Press SUPER + P to hide the window and SUPER + P again to show it.
 
-Proton VPN also opens on login, through `hl.exec_cmd("protonvpn-app")` in the `hyprland.start` block of `hyprland.lua`. Its window appears on login, so hide it with `SUPER + P`. Autostart only runs on login, so `hyprctl reload` won't start it. Keep the app's own auto-connect setting off, because with it on you can get a "No server available in the current tier" popup at login.
+Proton VPN also opens on login, through hl.exec_cmd("protonvpn-app") in the hyprland.start block of hyprland.lua. Its window appears on login, so hide it with SUPER + P. Autostart only runs on login, so hyprctl reload won't start it. Keep the app's own auto-connect setting off, because with it on you can get a "No server available in the current tier" popup at login.
 
-If nothing happens, run the script by hand to see its error:
-
-```bash
-~/.config/hypr/protonvpn-toggle.sh
-```
-
-The script finds the window by its title, `Proton VPN`. Check Hyprland sees it with `hyprctl clients | grep -i proton`. Newer Hyprland uses Lua commands for `hyprctl dispatch`, which is why the script is written that way.
+If nothing happens, check that Hyprland sees the window with hyprctl clients | grep -i proton. The key finds the window by its title, Proton VPN. Newer Hyprland uses Lua commands for hyprctl dispatch, which is why the toggle is written that way.
 
 ### If it still disconnects
 
@@ -745,59 +696,18 @@ sudo pacman -S --needed neovim ripgrep fd lazygit tree-sitter-cli fzf imagemagic
 
 kitty bundles its own Nerd Font symbols, so you don't need a separate font for the icons. `fzf` removes a `:checkhealth` warning, and `imagemagick` lets Neovim show images in kitty.
 
-### Install LazyVim
+### Neovim config
 
-This backs up any existing Neovim config first (a "No such file" error just means there wasn't one):
+The config is LazyVim plus diffview and gitgraph, kept in its own GitHub repository (https://github.com/clarhke/nvim) in ~/code/nvim, with ~/.config/nvim linking to it. The git extras are in lua/plugins/git-extras.lua, and lazy-lock.json is in the repository, so you get the same plugin versions as before. This backs up any existing Neovim config first (a "No such file" error just means there wasn't one), then clones and links the config:
 
-```bash
+```
 mv ~/.config/nvim ~/.config/nvim.bak
 mv ~/.local/share/nvim ~/.local/share/nvim.bak
 mv ~/.local/state/nvim ~/.local/state/nvim.bak
 mv ~/.cache/nvim ~/.cache/nvim.bak
-git clone https://github.com/LazyVim/starter ~/.config/nvim
-rm -rf ~/.config/nvim/.git
-```
-
-### Add diffview and gitgraph
-
-LazyVim loads every file in `lua/plugins/` automatically:
-
-```bash
-cat > ~/.config/nvim/lua/plugins/git-extras.lua <<'EOF'
-return {
-  {
-    "sindrets/diffview.nvim",
-    cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
-    keys = {
-      { "<leader>gv", "<cmd>DiffviewOpen<cr>", desc = "Diffview" },
-      { "<leader>gV", "<cmd>DiffviewClose<cr>", desc = "Diffview close" },
-    },
-  },
-  {
-    "isakbm/gitgraph.nvim",
-    dependencies = { "sindrets/diffview.nvim" },
-    keys = {
-      {
-        "<leader>gm",
-        function()
-          require("gitgraph").draw({}, { all = true, max_count = 5000 })
-        end,
-        desc = "Git graph",
-      },
-    },
-    opts = {
-      hooks = {
-        on_select_commit = function(commit)
-          vim.cmd("DiffviewOpen " .. commit.hash .. "^!")
-        end,
-        on_select_range_commit = function(from, to)
-          vim.cmd("DiffviewOpen " .. from.hash .. "~1.." .. to.hash)
-        end,
-      },
-    },
-  },
-}
-EOF
+mkdir -p ~/code
+git clone https://github.com/clarhke/nvim.git ~/code/nvim
+ln -s ~/code/nvim ~/.config/nvim
 ```
 
 ### First launch
@@ -843,61 +753,19 @@ To commit and push, press `Space g g`, then:
 
 ## 10. Moving to a new laptop
 
-Your Hyprland config and your Neovim config each live in their own GitHub repository, so on a new laptop you clone them instead of rewriting anything. This guide lives in its own repository too: `https://github.com/clarhke/config-guide`. The real folders live in `~/code`, and `~/.config` only holds links to them, so avoid deleting those links by hand.
+Your Hyprland config and your Neovim config each live in their own GitHub repository, and steps 6 and 9 clone them, so on a new laptop you work through this guide from the top. This guide lives in its own repository too: https://github.com/clarhke/config-guide. The real folders live in ~/code, and ~/.config only holds links to them, so avoid deleting those links by hand.
 
-- Hyprland config: `https://github.com/clarhke/hyprland`, kept in `~/code/hyprland` and linked from `~/.config/hypr`
-- Neovim config: `https://github.com/clarhke/nvim`, kept in `~/code/nvim` and linked from `~/.config/nvim`
-- This guide: `https://github.com/clarhke/config-guide`, cloned to `~/code/config-guide`
-
-### Before you start
-
-Follow steps 0 to 2 first (update, yay and the packages). Also install the LazyVim dependencies from the LazyVim step:
-
-```bash
-sudo pacman -S --needed neovim ripgrep fd lazygit tree-sitter-cli fzf imagemagick
-```
-
-Hyprland must already be installed and working.
-
-### Log in to GitHub
-
-Cloning public repositories needs no login, but pushing does. This is the same as "Backing up your config to GitHub" in step 6:
-
-```bash
-gh auth login
-gh auth setup-git
-git config --global user.name "your name"
-git config --global user.email "you@example.com"
-```
-
-### Restore the Hyprland config
-
-A fresh Hyprland install creates its own `~/.config/hypr`, and `git clone` refuses a folder that isn't empty, so move it aside first (a "No such file" error just means there wasn't one):
-
-```bash
-mv ~/.config/hypr ~/.config/hypr.bak
-mkdir -p ~/code
-git clone https://github.com/clarhke/hyprland.git ~/code/hyprland
-ln -s ~/code/hyprland ~/.config/hypr
-```
-
-### Restore the Neovim config
-
-```bash
-mv ~/.config/nvim ~/.config/nvim.bak
-git clone https://github.com/clarhke/nvim.git ~/code/nvim
-ln -s ~/code/nvim ~/.config/nvim
-```
-
-Then open Neovim with `nvim`. The first launch installs all the plugins and treesitter parsers, which takes a minute. When the messages stop, quit with `:qa` and reopen once. `lazy-lock.json` is in the repository, so you get the same plugin versions as before.
+- Hyprland config: https://github.com/clarhke/hyprland, kept in ~/code/hyprland and linked from ~/.config/hypr
+- Neovim config: https://github.com/clarhke/nvim, kept in ~/code/nvim and linked from ~/.config/nvim
+- This guide: https://github.com/clarhke/config-guide, cloned to ~/code/config-guide
 
 ### Copy what isn't in the repositories
 
-- **Wallpaper:** copy `~/misc/wallpaper.png` over from the old laptop (USB stick or cloud storage) into `~/misc`. Create the folder first with `mkdir -p ~/misc`.
-- **Waybar:** the config and style are in step 3 of this guide, not in the repositories.
-- **Shell aliases:** step 5.
-- **System-level steps:** the SDDM login wallpaper (step 4), the VPN (step 7) and TLP (step 8) change files outside your home folder, so run them again.
-- **Hardware settings:** `hyprland.lua` was written for the old laptop. Check the monitor name (`eDP-1` in the wallpaper line), `kb_layout` and the scale against "Before you start: laptop checklist" at the top of this guide.
+- Wallpaper: copy ~/misc/wallpaper.png over from the old laptop (USB stick or cloud storage) into ~/misc. Create the folder first with mkdir -p ~/misc.
+- Waybar: the config and style are in step 3 of this guide, not in the repositories.
+- Shell aliases: step 5.
+- System-level steps: the SDDM login screen (step 4), the VPN (step 7) and TLP (step 8) change files outside your home folder, so the repositories don't carry them. Run those steps on every new laptop.
+- Hardware settings: hyprland.lua was written for the old laptop. Check the monitor name (eDP-1 in the wallpaper line), kb_layout and the scale against the laptop checklist at the top of this guide.
 
 Then log out and back in so autostart runs.
 
@@ -905,21 +773,16 @@ Then log out and back in so autostart runs.
 
 Anything you haven't pushed won't be on the new laptop. After changing a config:
 
-```bash
+```
 cd ~/.config/hypr
 git add .
 git commit -m "what you changed"
 git push
-```
-
-```bash
 cd ~/.config/nvim
 git add .
 git commit -m "what you changed"
 git push
 ```
-
----
 
 ## 11. Cleanup
 
